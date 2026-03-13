@@ -1,0 +1,35 @@
+name: Build sandbox agent images
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - name: agent-sandbox
+            context: images/agent-sandbox
+          - name: cloudflare-agent-sandbox
+            context: images/cloudflare-agent-sandbox
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.context }}
+          push: true
+          tags: |
+            ghcr.io/paperclipai/${{ matrix.image.name }}:latest
+            ghcr.io/paperclipai/${{ matrix.image.name }}:${{ github.ref_name }}
